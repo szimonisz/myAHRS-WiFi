@@ -2,7 +2,7 @@
         udp-recv: a simple udp server
        
         Sniff, receive, and display UDP packets delivered to a specified port (within port.h)
-        Biscuit device is sending to port 4120.
+        myAHRS+ device is sending to port 4120 by default.
 
         usage:  ./udp-recv
 
