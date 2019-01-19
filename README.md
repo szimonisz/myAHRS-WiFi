@@ -39,6 +39,8 @@ Step 8: Upload the myAHRS-euler-wifi.ino project code onto the WeMos D1 Mini Wif
 
 ## Wiring the D1 Mini WiFi Board to the myAHRS+ IMU
 
+![Wiring Picture](./images/IMG_1044.png "wiring png")
+
 Wiring for this is fairly simple, requires 4 wires between the two boards.
 Here are the required pin connections:
 
@@ -53,6 +55,7 @@ For power, use the myAHRS+ Micro USB port.
 
 The entire unit should now be spitting out XYZ values at the specified refreshr rate via UDP packets to the local network.
 ## udp-recv.c:
+![udp-recv in action](./images/udp-recv-gif.gif "udp-recv in action")
 
 A C program that sniffs a designated port (4210 by default) for UDP packets, parses and displays them as a string. Enables the user to access and observe the Euler angles provided by the myAHRS+ IMU in real time - over a Wifi connection.
 
