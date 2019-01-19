@@ -53,7 +53,7 @@ Here are the required pin connections:
 
 For power, use the myAHRS+ Micro USB port.
 
-The entire unit should now be spitting out XYZ values at the specified refreshr rate via UDP packets to the local network.
+The entire unit should now be spitting out XYZ values at the specified refresh rate via UDP packets to the local network.
 ## udp-recv.c:
 ![udp-recv in action](./images/udp-recv-gif "udp-recv in action")
 
