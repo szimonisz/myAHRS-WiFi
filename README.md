@@ -55,7 +55,7 @@ For power, use the myAHRS+ Micro USB port.
 
 The entire unit should now be spitting out XYZ values at the specified refreshr rate via UDP packets to the local network.
 ## udp-recv.c:
-![udp-recv in action](./images/udp-recv-gif.gif "udp-recv in action")
+![udp-recv in action](./images/udp-recv-gif "udp-recv in action")
 
 A C program that sniffs a designated port (4210 by default) for UDP packets, parses and displays them as a string. Enables the user to access and observe the Euler angles provided by the myAHRS+ IMU in real time - over a Wifi connection.
 
