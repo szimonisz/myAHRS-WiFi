@@ -2,7 +2,7 @@
 
 ## myAHRS-euler-wifi:
 
-An Arduino project that configures the WiFi of the D1 Mini WiFi board, creates an I2C connection with the myAHRS+ sensor.
+An Arduino project that configures the WiFi of the WeMos D1 Mini WiFi board, creates an I2C connection with the myAHRS+ sensor.
 
 I2C specification: (D1 Mini WiFi is MASTER, myAHRS+ is SLAVE). Makes use of myAHRS+ I2C register mapping sample code. 
 
