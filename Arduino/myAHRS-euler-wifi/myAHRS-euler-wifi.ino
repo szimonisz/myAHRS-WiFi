@@ -7,17 +7,28 @@
 #define I2CAddressESPWifi 8
 
 WiFiUDP Udp;
-char* wifiSSID = "LaCroix";
-char* wifiPassword = "pamplemousse";
+// WiFi Setup
+char* wifiSSID = "INSERT SSID HERE";
+char* wifiPassword = "INSERT WIFI PASSWORD HERE";
 
-const int sclPin = D1;
-const int sdaPin = D2;
-
+// Designated UDP port
 unsigned int localUdpPort = 4210;
+
+// UDP message buffer
 char message[256];
 
-//myAHRS_plus register map
+// The SDA and SCL pins of the Mini D1's I2C bus (D2,D1 respectively)
+const int sdaPin = D2;
+const int sclPin = D1;
 
+// Sets the refresh rate of the sensor data read (in ms) through I2C
+// myAHRS+ is capable of up to 1khz I2C 
+// (Set to 10hz by default)
+// Essentially just sets the main program's loop delay
+const int refreshRateMilliseconds = 100; //100ms -> 10hz
+
+// myAHRS_plus register map
+// I2C register mapping (provided by myAHRS+ sample code)
 enum {
     I2C_SLAVE_REG_WHO_AM_I = 0x01,
     I2C_SLAVE_REG_REV_ID_MAJOR,
@@ -85,25 +96,30 @@ enum {
     I2C_SLAVE_REG_QUATERNIAN_W_HIGH,
 };
 
-
 void setup()
 {
-  //Initialization
-  Wire.begin(sdaPin, sclPin); //Change to Wire.begin() for non ESP.
+  //Initialization of I2C master (D! Mini)
+  Wire.begin(sdaPin, sclPin); 
 
+  //Login to WiFi and bind to specified UDP port
   Udp.begin(localUdpPort);
   WiFi.begin(wifiSSID,wifiPassword);
+
+  //infinite loop, waits for WiFi to connect successfully
   while(WiFi.status() != WL_CONNECTED){
     delay(500);
   }
+  
+  //Send a UDP Packet notifying the user that WiFi connection was a success
   Udp.beginPacket(Udp.remoteIP(),4210);
   Udp.write("Connected!");
-  //Udp.write(WiFi.localIP());
   Udp.endPacket();
+
+  
   who_am_i();
   read_rev_id();
   
-  delay(1000); //Wait for 1second.
+  delay(1000); //Wait for 1 second.
 }
 
 
@@ -121,6 +137,10 @@ bool sensor_init()
   return true;
 }
 
+// I2C read function
+// Parameter 'buff' will be filled with the sensor data read from the I2C Wire read()
+// Returns TRUE if I2C read was successful, FALSE if unsuccessful
+// Should only return FALSE due to a bad connection between SDA/SLC pins of master and slave
 
 bool read(uint8_t reg_add, uint8_t* buff , uint8_t len)
 {
@@ -136,10 +156,12 @@ bool read(uint8_t reg_add, uint8_t* buff , uint8_t len)
     while(Wire.available()) {
         buff[cnt++] = Wire.read();
     }
-
+    // if the buffer was filled with expected length of sensor data
+    // if false, we know the I2C read was unsuccessful 
     return (cnt == len);
 }
 
+// Read I2C raw data from sensor, myAHRS+ sample code
 int read_raw_data()
 {
   uint8_t buf_raw_data[18];
@@ -156,13 +178,9 @@ int read_raw_data()
   int16_t mag_x = (buf_raw_data[13]<<8) | buf_raw_data[12];
   int16_t mag_y = (buf_raw_data[15]<<8) | buf_raw_data[14];
   int16_t mag_z = (buf_raw_data[17]<<8) | buf_raw_data[16];
-
-  //Serial.print("#RAW ACCEL = ["); Serial.print(acc_x); Serial.print(", "); Serial.print(acc_y); Serial.print(", "); Serial.print(acc_z); Serial.print("]  ");
-  //Serial.print("#RAW GYRO = ["); Serial.print(gyro_x); Serial.print(", "); Serial.print(gyro_y); Serial.print(", "); Serial.print(gyro_z); Serial.print("]  ");
-  //Serial.print("#RAW MAGNET = ["); Serial.print(mag_x); Serial.print(", "); Serial.print(mag_y); Serial.print(", "); Serial.print(mag_z); Serial.print("]  ");
-  //Serial.println();
 }
 
+// Read I2C compensated data from sensor, myAHRS+ sample code
 int read_compensated_data()
 {
   uint8_t buf_comp_data[18];
@@ -188,16 +206,12 @@ int read_compensated_data()
   float comp_mag_x = (float)mag_c_x * 0.3;
   float comp_mag_y = (float)mag_c_y * 0.3;
   float comp_mag_z = (float)mag_c_z * 0.3;
-
-  //Serial.print("#COMP ACCEL = ["); Serial.print(comp_acc_x); Serial.print(", "); Serial.print(comp_acc_y); Serial.print(", "); Serial.print(comp_acc_z); Serial.print("]  ");
-  //Serial.print("#COMP GYRO = ["); Serial.print(comp_gyro_x); Serial.print(", "); Serial.print(comp_gyro_y); Serial.print(", "); Serial.print(comp_gyro_z); Serial.print("]  ");
-  //Serial.print("#COMP MAGNET = ["); Serial.print(comp_mag_x); Serial.print(", "); Serial.print(comp_mag_y); Serial.print(", "); Serial.print(comp_mag_z); Serial.print("]  ");
-  //Serial.println();
 }
 
-
-
 // EULER ANGLE(RPY)
+// Reads Euler Angle data from orientation sensor via I2C protocol
+// Formats the bytes read from I2C into proper Euler Roll/Pitch/Yaw
+// If the I2C read was successful, it a packet with XYZ will be sent to designated UDP port
 int read_euler()
 {
   uint8_t buf_euler[6];
@@ -212,19 +226,17 @@ int read_euler()
   float pitch = (float)euler_y * 180 / 32767;
   float yaw = (float)euler_z * 180 / 32767;
 
+  // If sensor data was pulled from I2C successfully
   if(i2cSuccess == true){
-    Udp.beginPacket(Udp.remoteIP(),4210);
+    // Send a UDP packet to port 4210 specifying
+    Udp.beginPacket(Udp.remoteIP(),localUdpPort);
     sprintf(message,"ROLL: %f\nPITCH: %f\nYAW: %f\n",roll,pitch,yaw);
     Udp.write(message);
     Udp.endPacket();
   }
-
-  
-  
-  Serial.print("#EULER ANGLE = ["); Serial.print(roll); Serial.print(" , "); Serial.print(pitch); Serial.print(" , "); Serial.print(yaw); Serial.print("]  ");
-  Serial.println();   Serial.println();
 }
 
+// Read quaternion values from sensor through I2C protocol, myAHRS+ sample code
 int read_quat()
 {
   uint8_t buf_quat[8];
@@ -239,43 +251,32 @@ int read_quat()
   float quaternion_x = (float)quat_x / 32767;
   float quaternion_y = (float)quat_y / 32767;
   float quaternion_z = (float)quat_z / 32767;
-  float quaternion_w = (float)quat_w / 32767;
-  
-  //Serial.print("#QUATERNION = ["); Serial.print(quaternion_x); Serial.print(" , "); Serial.print(quaternion_y); Serial.print(" , "); Serial.print(quaternion_z); Serial.print(" , "); Serial.print(quaternion_w); Serial.print("]  ");
-  //Serial.println();   Serial.println();
-  
+  float quaternion_w = (float)quat_w / 32767;  
 }
 
-
- //READ REVISION ID
+//READ REVISION ID
 int read_rev_id()
 {
   uint8_t id_1 = 0;
-  uint8_t id_2 = 0;
-  
+  uint8_t id_2 = 0;  
   read(I2C_SLAVE_REG_REV_ID_MAJOR, &id_1, 1);
   read(I2C_SLAVE_REG_REV_ID_MAJOR, &id_2, 1);
-
-  //Serial.print("READ REVISION ID= "); Serial.print(id_1); Serial.println(id_2);
 }
 
+// Grabs and defines I2C address of myAHRS+ 
 int who_am_i()
 {
   uint8_t whomi = 0;
-  
   read(I2C_SLAVE_REG_WHO_AM_I, &whomi, 1);
-
-  //Serial.print("WHO AM I = "); Serial.println(whomi, HEX);
 }
 
 
 void loop()
 {
-  //Serial.println("------------------------------------------------------------------------------------------------------------------------");
   //read_raw_data();
   //read_compensated_data();
   read_euler();
   //read_quat();
 
-  delay(100); //10Hz
+  delay(refreshRateMilliseconds); // 10Hz
 }
