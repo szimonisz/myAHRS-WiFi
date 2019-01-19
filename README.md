@@ -31,7 +31,7 @@ Step 6: Go to Tools -> Upload Speed and select: 115200
 
 Step 7: Go to Tools -> Port and ensure the correct COM port is selected.
 
-Step 8: Change the wifiSSID, wifiPassword variables within the Arduino code to the local network's SSID and password.
+Step 8: Change the wifiSSID, wifiPassword variables within the Arduino code to the local network's info.
         You may also change the desired refresh rate and UDP port.
 
 Step 8: Upload the myAHRS-euler-wifi.ino project code onto the WeMos D1 Mini Wifi Board
