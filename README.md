@@ -39,7 +39,7 @@ Step 8: Upload the myAHRS-euler-wifi.ino project code onto the WeMos D1 Mini Wif
 
 ## Wiring the D1 Mini WiFi Board to the myAHRS+ IMU
 
-![Wiring Picture](./images/IMG_1044.png "wiring png" =250x250)
+![Wiring Picture](./images/IMG_1044.png "wiring png")
 
 Wiring for this is fairly simple, requires 4 wires between the two boards.
 Here are the required pin connections:
